@@ -1,0 +1,15 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Coco/R Builder
+Bundle-SymbolicName: at.ssw.coco.eclipse.builder;singleton:=true
+Bundle-Version: 0.3.7
+Bundle-Vendor: ssw.jku.at
+Bundle-ActivationPolicy: lazy
+Bundle-Activator: at.ssw.coco.builder.Activator
+Require-Bundle: org.eclipse.ui,
+ org.eclipse.core.runtime,
+ at.ssw.coco.eclipse.core,
+ org.eclipse.core.resources
+Export-Package: at.ssw.coco.builder
+Import-Package: org.eclipse.jdt.core
+

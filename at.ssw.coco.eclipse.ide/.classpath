@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry excluding="at/ssw/coco/ide/editor/scanners/javacode/" kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/at.ssw.coco.eclipse.builder"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/at.ssw.coco.eclipse.core"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/at.ssw.coco.lib"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

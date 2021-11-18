@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Coco/R Development Tools
+Bundle-SymbolicName: at.ssw.coco.eclipse.branding
+Bundle-Version: 0.3.7
+Bundle-Vendor: ssw.jku.at
+Bundle-ActivationPolicy: lazy

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<site>
+   <description name="Coco/R Eclipse Plugin" url="http://ssw.jku.at/Research/Projects/Coco/Eclipse">
+      Coco/R Development Tools update site
+   </description>
+   <feature url="features/at.ssw.coco.eclipse_0.3.7.jar" id="at.ssw.coco.eclipse" version="0.3.7">
+      <category name="Coco/R Development Tools"/>
+   </feature>
+   <category-def name="Coco/R Development Tools" label="Coco/R Development Tools">
+      <description>
+         Integrates the Compiler Generator Coco/R into the Eclipse SDK.
+      </description>
+   </category-def>
+</site>

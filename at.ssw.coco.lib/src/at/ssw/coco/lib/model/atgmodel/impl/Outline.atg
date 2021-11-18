@@ -1,0 +1,387 @@
+/*******************************************************************************
+ * Copyright (C) 2006 Christian Wressnegger
+ * Copyright (C) 2009 Andreas Woess
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * version 2 as published by the Free Software Foundation.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation,
+ * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *******************************************************************************/
+/*-------------------------------------------------------------------------
+ compile with:
+   java -jar Coco.jar Outline.atg -package at.ssw.coco.ide.editor.model.impl
+-------------------------------------------------------------------------*/
+// based on Coco.atg of the Coco/R for Java, version 2009-06-22
+
+import static at.ssw.coco.lib.editor.model.ATGSegment.Type.*;
+import java.io.IOException;
+import at.ssw.coco.lib.editor.model.ATGSegment;
+
+/**
+ * @author Christian Wressnegger <k0356707@students.jku.at>
+ * @author Andreas Woess <andwoe@users.sf.net>
+ */
+COMPILER Coco
+
+	public ATGSegment fRoot;
+
+	public ATGSegment getOutline() throws IOException {
+		if (fRoot == null) {
+			throw new IOException("Run the Parser before fetching its output!");
+		}
+		return fRoot;
+	}
+
+	private static boolean spaceBetween(String left, String right, boolean spaceInSource) {
+		if (left.length() == 0 || right.length() == 0) return false;
+		char last = left.charAt(left.length()-1);
+		char first = right.charAt(0);
+		if (last == ',')
+			return true;
+		else if ((last == '>' || last == ']') && Character.isJavaIdentifierPart(first))
+			return true;
+		else if (Character.isJavaIdentifierPart(last)
+				&& Character.isJavaIdentifierPart(first))
+			return spaceInSource;
+		else
+			return false;
+	}
+
+/*-------------------------------------------------------------------------*/
+
+CHARACTERS
+  letter    = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_".
+  digit     = "0123456789".
+  cr        = '\r'.
+  lf        = '\n'.
+  tab       = '\t'.
+  stringCh  = ANY - '"' - '\\' - cr - lf.
+  charCh    = ANY - '\'' - '\\' - cr - lf.
+  printable = '\u0020' .. '\u007e'.
+  hex       = "0123456789abcdef".
+
+TOKENS
+  ident     = letter { letter | digit }.
+  number    = digit { digit }.
+  string    = '"' { stringCh | '\\' printable } '"'.
+  badString = '"' { stringCh | '\\' printable } (cr | lf).
+  char      = '\'' ( charCh | '\\' printable { hex } ) '\''.
+
+PRAGMAS
+  ddtSym    = '$' { digit | letter }.
+
+COMMENTS FROM "/*" TO "*/" NESTED
+COMMENTS FROM "//" TO lf
+
+IGNORE cr + lf + tab
+
+/*-------------------------------------------------------------------------*/
+
+PRODUCTIONS
+
+Coco                            (. int beg, end;
+                                   ATGSegment imports=null, ignores=null, comments=null;
+                                   ATGSegment settings, productions;
+                                   ATGSegment group, child;
+                                   String str0, attribs;
+                                 .)
+=
+  [ // import statements
+    ANY                         (. beg = t.pos; .)
+    { ANY }                     (. imports = new ATGSegment(SECTION_IMPORTS, beg, la.pos-1); .)
+  ]
+
+  "COMPILER"                    (. beg = t.pos; .)
+  ident                         (. fRoot = new ATGSegment(SECTION_COMPILER, t.val, beg);
+                                   settings = new ATGSegment(SECTION_SCANNER);
+                                   if (imports != null) fRoot.addChild(imports);
+                                   beg = end = la.pos;
+                                 .)
+  { ANY                         (. end = t.pos + t.val.length(); .)
+  }                             (. if (end > beg) fRoot.addChild(new ATGSegment(SECTION_CODE, beg, end)); .)
+  [ "IGNORECASE"                (. settings.addChild(new ATGSegment(GROUP_IGNORECASE, t.pos, t.pos + t.val.length())); .) ]
+  [ "CHARACTERS"                (. group = new ATGSegment(GROUP_CHARACTERS, t.pos); .)
+    { SetDecl<group> }          (. group.setEndPoint(t.pos + t.val.length()); settings.addChild(group); .) ]
+  [ "TOKENS"                    (. group = new ATGSegment(GROUP_TOKENS, t.pos); .)
+    { TokenDecl<group> }        (. group.setEndPoint(t.pos + t.val.length()); settings.addChild(group); .) ]
+  [ "PRAGMAS"                   (. group = new ATGSegment(GROUP_PRAGMAS, t.pos); .)
+    { TokenDecl<group> }        (. group.setEndPoint(t.pos + t.val.length()); settings.addChild(group); .) ]
+  { "COMMENTS"                  (. beg = t.pos;
+                                   if (comments == null) comments = new ATGSegment(GROUP_COMMENTS, beg); .)
+    "FROM" TokenExpr            (. str0 = "FROM " + t.val +" TO "; .)
+    "TO" TokenExpr              (. str0 += t.val; .)
+    [ "NESTED"                  (. str0 += " (NESTED)"; .)
+    ]                           (. comments.addChild(new ATGSegment(ITEM_COMMENT, str0, beg, t.pos + t.val.length()));
+                                   comments.setEndPoint(t.pos + t.val.length()); .)
+  }                             (. if (comments!=null) settings.addChild(comments); .)
+  { "IGNORE"                    (. beg = t.pos;
+                                   if (ignores==null) ignores = new ATGSegment(GROUP_IGNORE, t.pos); .)
+  Set<out str0>                 (. ignores.setEndPoint(t.pos + t.val.length());
+                                   ignores.addChild(new ATGSegment(ITEM_IGNORE, str0, beg, t.pos + t.val.length())); .)
+  }                             (. if (ignores!=null) settings.addChild(ignores);
+                                   settings.setEndPoint(t.pos + t.val.length()); .)
+
+  SYNC
+  "PRODUCTIONS"                 (. fRoot.addChild(settings);
+                                   productions = new ATGSegment(SECTION_PRODUCTIONS, t.pos);
+                                   fRoot.addChild(productions);
+                                 .)
+  { ident                       (. beg = t.pos; str0 = t.val; attribs = null; .)
+    [ AttrDecl<out attribs>     (. attribs = "<" + attribs + ">"; .) ]
+    [ SemText ]
+    WEAK '='
+    Expression
+    WEAK '.'                    (. child = new ATGSegment(ITEM_PRODUCTION, str0, beg, t.pos + t.val.length());
+                                   if (attribs != null) child.setAttributes(attribs);
+                                   productions.addChild(child);
+                                 .)
+  }                             (. productions.setEndPoint(t.pos + t.val.length()); .)
+  "END" ident '.'               (. fRoot.setEndPoint(t.pos); .)
+.
+
+/*------------------------------------------------------------------------------------*/
+
+SetDecl<ATGSegment parent>      (. ATGSegment child; String s = null; assert s == null; .)
+=
+  ident                         (. child = new ATGSegment(ITEM_CHARSET, t.val, t.pos); .)
+  '=' Set<out s>                (. child.setEndPoint(t.pos + t.val.length()); parent.addChild(child); .)
+  '.'
+.
+
+/*------------------------------------------------------------------------------------*/
+
+Set<out String s>               (. String s2; .)
+=
+  SimSet<out s>
+  { '+' SimSet<out s2>          (. s += " + " + s2; .)
+  | '-' SimSet<out s2>          (. s += " - " + s2; .)
+  }
+.
+
+/*------------------------------------------------------------------------------------*/
+
+SimSet<out String s>            (. s = ""; .)
+=
+( ident                         (. s = t.val; .)
+| string                        (. s = t.val; .)
+| Char                          (. s = t.val; .)
+  [ ".." Char                   (. s += " .. " + t.val; .)
+  ]
+| "ANY"                         (. s = t.val; .)
+)
+.
+
+/*--------------------------------------------------------------------------------------*/
+
+Char
+=
+  char
+.
+
+/*------------------------------------------------------------------------------------*/
+
+TokenDecl<ATGSegment parent>    (. ATGSegment child; .)
+=
+  Sym                           (. child = new ATGSegment(ITEM_TOKEN, t.val, t.pos); .)
+  SYNC
+  ( '=' TokenExpr '.' | )
+  [ SemText ]                   (. child.setEndPoint(t.pos + t.val.length()); parent.addChild(child); .)
+.
+
+/*------------------------------------------------------------------------------------*/
+
+AttrDecl<out String s>          (. int beg; s = ""; int end = 0; .)
+=
+  '<'                           // attributes denoted by < ... >
+  ( ('^' | "out")               (. s += ("^".equals(t.val) ? "out" : t.val) + " "; beg = la.pos; .)
+    TypeName                    (. s += scanner.buffer.GetString(beg, t.pos + t.val.length()) + " "; .)
+    ident                       (. s += t.val; .)
+    ( '>'
+    | ','                       (. s += t.val; .)
+      { ANY                     (. s += (spaceBetween(s, t.val, end != t.pos) ? " " : "") + t.val; end = t.pos+t.val.length(); .)
+      | badString
+      } '>'
+    )
+  |
+    {  ANY                      (. s += (spaceBetween(s, t.val, end != t.pos) ? " " : "") + t.val; end = t.pos+t.val.length(); .)
+    | badString
+    } '>'
+  )
+|
+  "<."                          // attributes denoted by <. ... .>
+  ( ('^' | "out")               (. s += ("^".equals(t.val) ? "out" : t.val) + " "; beg = la.pos; .)
+    TypeName                    (. s += scanner.buffer.GetString(beg, t.pos + t.val.length()) + " "; .)
+    ident                       (. s += t.val; .)
+    ( ".>"
+    | ','                       (. s += t.val; .)
+      { ANY                     (. s += (spaceBetween(s, t.val, end != t.pos) ? " " : "") + t.val; end = t.pos+t.val.length(); .)
+      | badString
+      } ".>"
+    )
+  |
+    {  ANY                      (. s += (spaceBetween(s, t.val, end != t.pos) ? " " : "") + t.val; end = t.pos+t.val.length(); .)
+    | badString
+    } ".>"
+  ).
+
+/*------------------------------------------------------------------------------------*/
+// type names may contain angle brackets for generics
+TypeName
+= ident {'.' ident | '[' ']' | '<' TypeName {',' TypeName} '>'}.
+
+/*------------------------------------------------------------------------------------*/
+
+Expression
+=
+  Term
+  { WEAK '|'
+    Term
+  }
+.
+
+/*------------------------------------------------------------------------------------*/
+
+Term
+=
+( [
+    Resolver
+  ]
+  Factor
+  { Factor
+  }
+|
+)
+.
+
+/*------------------------------------------------------------------------------------*/
+
+Factor
+=
+( [ "WEAK"
+  ]
+  Sym
+  [ Attribs
+  ]
+| '(' Expression ')'
+| '[' Expression ']'
+| '{' Expression '}'
+| SemText
+| "ANY"
+| "SYNC"
+)
+.
+
+/*------------------------------------------------------------------------------------*/
+
+Resolver
+=
+  "IF" "("
+  Condition
+.
+
+/*------------------------------------------------------------------------------------*/
+
+Condition = { "(" Condition | ANY } ")" .
+
+/*------------------------------------------------------------------------------------*/
+
+TokenExpr
+=
+  TokenTerm
+  { WEAK '|'
+    TokenTerm
+  }
+.
+
+/*------------------------------------------------------------------------------------*/
+
+TokenTerm
+=
+  TokenFactor
+  { TokenFactor
+  }
+  [ "CONTEXT"
+    '(' TokenExpr
+    ')'
+  ]
+.
+
+/*------------------------------------------------------------------------------------*/
+
+TokenFactor
+=
+
+( Sym
+| '(' TokenExpr ')'
+| '[' TokenExpr ']'
+| '{' TokenExpr '}'
+)
+.
+
+/*------------------------------------------------------------------------------------*/
+
+Sym
+=
+  ( ident | (string | char ) )
+.
+
+/*------------------------------------------------------------------------------------*/
+
+Attribs
+=
+  '<'                           // attributes denoted by < ... >
+  ( ('^' | "out")
+    { ANY
+    | Bracketed
+    | badString
+    }
+    ( '>'
+    | ','
+      {  ANY
+       | badString
+      } '>'
+    )
+  |
+    {  ANY
+     | badString
+    } '>'
+  )
+|
+  "<."                          // attributes denoted by <. ... .>
+  ( ('^' | "out")
+    { ANY
+    | Bracketed
+    | badString
+    }
+    ( ".>"
+    | ','
+      {  ANY
+       | badString
+      } ".>"
+    )
+  |
+    {  ANY
+     | badString
+    } ".>"
+  )
+.
+
+/*------------------------------------------------------------------------------------*/
+// skip commas in brackets such as in <out a[i, j], b> or <out a[foo(x, y)], z>
+Bracketed
+= '(' {Bracketed | ANY} ')' | '[' {Bracketed | ANY} ']'.
+
+/*------------------------------------------------------------------------------------*/
+
+SemText
+=
+  "(." { ANY | badString | "(." } ".)"
+.
+
+END Coco.

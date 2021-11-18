@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+   <extension
+      id="at.ssw.coco.eclipse.builder.CocoNature"
+      name="Coco/R Nature"
+      point="org.eclipse.core.resources.natures">
+       <runtime>
+          <run class="at.ssw.coco.builder.CocoNature"/>
+       </runtime>
+       <builder id="at.ssw.coco.eclipse.builder.CocoBuilder"/>
+	</extension>
+	<extension
+	  id="at.ssw.coco.eclipse.builder.CocoBuilder" name="Coco/R Builder" point="org.eclipse.core.resources.builders">
+	  <builder
+	    hasNature="true"
+	    isConfigurable="true">
+	     <run class="at.ssw.coco.builder.CocoBuilder">
+	        <parameter name="optimize" value="true" />
+	        <parameter name="comment" value="Builds the Coco/R Parser and Scanner" />
+	     </run>
+	  </builder>
+   </extension>
+   <extension
+         id="at.ssw.coco.eclipse.builder.popupMenus"
+         name="Coco/R Project PopupMenu"
+         point="org.eclipse.ui.popupMenus">
+      <objectContribution
+            adaptable="true"
+            id="at.ssw.coco.eclipse.builder.popupMenu.ProjectWithNature"
+            objectClass="org.eclipse.core.resources.IProject">
+         <action
+               class="at.ssw.coco.builder.actions.RemoveCocoAction"
+               icon="icons/delete.gif"
+               id="at.ssw.coco.eclipse.builder.actions.removeNature"
+               label="Remove Coco/R Extension">
+         </action>
+         <visibility>
+            <or>
+               <objectState
+                     name="projectNature"
+                     value="at.ssw.coco.eclipse.builder.CocoNature">
+               </objectState>
+               <objectState
+                     name="projectNature"
+                     value="at.ssw.coco.builder.CocoNature">
+               </objectState>
+            </or>
+         </visibility>
+      </objectContribution>
+      <objectContribution
+            adaptable="true"
+            id="at.ssw.coco.eclipse.builder.popupMenu.ProjectWithoutNature"
+            objectClass="org.eclipse.core.resources.IProject">
+         <action
+               class="at.ssw.coco.builder.actions.AddCocoAction"
+               icon="icons/coco.gif"
+               id="at.ssw.coco.eclipse.builder.actions.addNature"
+               label="Extend to Coco/R Project"/>
+         <visibility>
+            <not>
+               <or>
+                  <objectState
+                        name="projectNature"
+                        value="at.ssw.coco.eclipse.builder.CocoNature">
+                  </objectState>
+                  <objectState
+                        name="projectNature"
+                        value="at.ssw.coco.builder.CocoNature">
+                  </objectState>
+               </or>
+            </not>
+         </visibility>
+      </objectContribution>
+   </extension>
+</plugin>

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="org.eclipse.ui.editors">
+      <editor
+            class="at.ssw.coco.plEditor.editor.CLNGEditor"
+            contributorClass="org.eclipse.ui.editors.text.TextEditorActionContributor"
+            default="true"
+            icon="icons/cocoE.gif"
+            id="at.ssw.coco.grammarEditor.editor2"
+            name="Grammar Editor">
+            <contentTypeBinding
+         		contentTypeId="at.ssw.cocoE.editor.CocoEContentType">
+      		</contentTypeBinding>
+      </editor>
+   </extension>
+   <extension
+         point="org.eclipse.ui.popupMenus">
+      <objectContribution
+            adaptable="false"
+            id="at.ssw.coco.plEditor.objectContribution2"
+            nameFilter="*.atg"
+            objectClass="org.eclipse.core.resources.IFile">
+         <action
+               class="at.ssw.coco.plEditor.model.EditorAction"
+               enablesFor="1"
+               icon="icons/cocoE.gif"
+               id="at.ssw.coco.plEditor.action1"
+               label="Generate Editor">
+         </action>
+      </objectContribution>
+      <objectContribution
+            adaptable="false"
+            id="at.ssw.cocoE.editor.MenuItem"
+            nameFilter="*_ProposalProvider.java"
+            objectClass="org.eclipse.jdt.core.IJavaElement">
+         <action
+               class="at.ssw.coco.plEditor.model.ProposalProviderAction"
+               enablesFor="1"
+               icon="icons/cocoE.gif"
+               id="at.ssw.cocoE.editor.action1"
+               label="Set ProposalProvider">
+         </action>
+      </objectContribution>
+   </extension>
+   <extension
+         point="org.eclipse.core.contenttype.contentTypes">
+      <content-type
+            id="at.ssw.cocoE.editor.CocoEContentType"
+            name="Coco\E"
+            priority="normal">
+      </content-type>
+   </extension>
+   <extension
+         point="org.eclipse.ui.preferencePages">
+      <page
+            class="at.ssw.coco.plEditor.preferences.pluginStore.PreferencePage"
+            id="at.ssw.coco.plEditor.preferences.PreferencePage"
+            name="Coco\E">
+      </page>
+      <page
+            category="at.ssw.coco.plEditor.preferences.PreferencePage"
+            class="at.ssw.coco.plEditor.preferences.pluginStore.SyntaxColoringPage"
+            id="at.ssw.coco.plEditor.preferences.SyntaxColoring"
+            name="Syntax Coloring">
+      </page>
+   </extension>
+   <extension
+         point="org.eclipse.core.runtime.preferences">
+      <initializer
+            class="at.ssw.coco.plEditor.preferences.pluginStore.PreferenceInitializer">
+      </initializer>
+   </extension>
+
+</plugin>

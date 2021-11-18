@@ -1,0 +1,65 @@
+import java.lang.System;
+import java.util.ArrayList;
+
+COMPILER JunitTestFile
+
+	public int foo(int bar) {
+		return bar * 2;
+	}
+
+IGNORECASE
+
+CHARACTERS
+	letter = 'A'..'Z' + 'a'..'z'.
+	digit = "0123456789".
+	cr = '\r'.
+	lf = '\n'.
+
+TOKENS
+	ident = letter {letter | digit}.
+	number = digit {digit}.
+
+PRAGMAS
+	switch = '$' { digit | letter }. (. System.out.println(foo(21)); .)
+
+COMMENTS FROM "/*" TO "*/" NESTED
+COMMENTS FROM "//" TO lf
+
+IGNORE cr + lf
+
+PRODUCTIONS
+
+JunitTestFile 									(. 	ArrayList<Integer> a = new ArrayList<Integer>();
+							 						int resolver = 42; 
+							 						int resolverOut = 0; .)
+=							 						
+{
+	Statement<out resolverOut, resolver>		(. 	a.add(resolver);
+													resolver = resolverOut; 
+													System.out.println("SemTextTest"); .)
+} 
+.
+
+Statement<out int resolverOut, int resolver> 		(. resolverOut = 0; .)									 
+=
+(
+	ident [ "[" number ']' ] "=" number SYNC ";"	(. resolverOut = 42; .)
+	|
+	"if" "(" Condition<resolver> ")" Statement<out resolverOut, resolver> ";"
+	|
+	ANY												(. resolverOut = 0; .)
+)
+.
+
+Condition<int resolverTest>  
+=
+ 
+	IF (resolverTest==42) ident "==" number
+	|
+	ident "==" ident
+	|
+	WEAK number
+ 
+.
+
+END JunitTestFile.

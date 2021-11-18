@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Coco/R Core
+Bundle-SymbolicName: at.ssw.coco.eclipse.core;singleton:=true
+Bundle-Version: 0.3.7
+Bundle-Vendor: ssw.jku.at
+Bundle-ActivationPolicy: lazy
+Export-Package: Coco,
+ at.ssw.coco.core
+Bundle-ClassPath: lib/Coco.jar,
+ wrapper.jar,
+ .
+Require-Bundle: org.eclipse.core.runtime
